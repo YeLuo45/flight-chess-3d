@@ -2,26 +2,29 @@ import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import { COLORS, getPositionData } from '../../game/constants';
+import * as THREE from 'three';
 
 export default function Piece3D({ piece, isSelected, canMove, onClick }) {
   const meshRef = useRef();
   const [hovered, setHovered] = useState(false);
-  
+  const targetScaleRef = useRef(new THREE.Vector3(1, 1, 1));
+
   const posData = getPositionData(piece.position, piece.color);
-  
+
   useFrame((state) => {
     if (meshRef.current) {
       // Floating animation
       meshRef.current.position.y = (posData?.y || 0.2) + Math.sin(state.clock.elapsedTime * 2 + piece.id.charCodeAt(0)) * 0.05;
-      
-      // Selection/hover scale
+
+      // Selection/hover scale with smooth lerp
       const targetScale = isSelected ? 1.2 : hovered && canMove ? 1.1 : 1;
-      meshRef.current.scale.lerize({ x: targetScale, y: targetScale, z: targetScale }, 0.1);
+      targetScaleRef.current.setScalar(targetScale);
+      meshRef.current.scale.lerp(targetScaleRef.current, 0.1);
     }
   });
-  
+
   if (!posData) return null;
-  
+
   return (
     <group
       position={[posData.x, posData.y || 0.2, posData.z]}
@@ -39,7 +42,7 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
           <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
         </mesh>
       )}
-      
+
       {/* Piece body */}
       <RoundedBox
         ref={meshRef}
@@ -57,7 +60,7 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
           metalness={0.2}
         />
       </RoundedBox>
-      
+
       {/* Piece top (dome) */}
       <mesh position={[0, 0.45, 0]} castShadow>
         <sphereGeometry args={[0.2, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
@@ -69,7 +72,7 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
           metalness={0.3}
         />
       </mesh>
-      
+
       {/* Shield indicator */}
       {piece.hasShield && (
         <mesh position={[0, 0.7, 0]}>
@@ -83,7 +86,7 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
           />
         </mesh>
       )}
-      
+
       {/* Finish indicator */}
       {piece.isInFinish && (
         <mesh position={[0, 0.7, 0]}>
