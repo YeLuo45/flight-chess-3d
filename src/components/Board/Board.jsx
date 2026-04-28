@@ -34,10 +34,10 @@ function Square({ position, color, isEvent, eventType }) {
       >
         <meshStandardMaterial
           color={baseColor}
-          emissive={isEvent ? (isLucky ? '#00ff00' : isCurse ? '#ff0000' : isTeleport ? '#00ffff' : '#ff00ff') : '#000000'}
-          emissiveIntensity={isEvent ? 0.5 : 0}
-          roughness={0.8}
-          metalness={0.2}
+          emissive={baseColor}
+          emissiveIntensity={isEvent ? 0.5 : 0.15}
+          roughness={0.7}
+          metalness={0.1}
         />
       </RoundedBox>
       
@@ -165,7 +165,7 @@ export default function Board() {
         position={[0, -0.15, 0]}
         receiveShadow
       >
-        <meshStandardMaterial color="#2a2a4a" roughness={0.9} metalness={0.1} />
+        <meshStandardMaterial color="#3a3a5a" roughness={0.9} metalness={0.1} />
       </RoundedBox>
       
       {/* Start area markers */}
