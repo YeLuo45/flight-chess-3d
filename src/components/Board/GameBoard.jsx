@@ -21,13 +21,13 @@ export default function GameBoard() {
   return (
     <Canvas
       shadows
-      camera={{ position: [15, 15, 15], fov: 50 }}
+      camera={{ position: [18, 18, 18], fov: 55 }}
       style={{ width: '100%', height: '100%' }}
     >
       <color attach="background" args={['#1a1a2e']} />
       
       {/* Lighting */}
-      <ambientLight intensity={0.6} color="#FFF5E6" />
+      <ambientLight intensity={0.8} color="#FFFFFF" />
       <directionalLight
         position={[10, 20, 10]}
         intensity={1.2}
