@@ -35,8 +35,8 @@ function Square({ position, color, isEvent, eventType }) {
         <meshStandardMaterial
           color={baseColor}
           emissive={baseColor}
-          emissiveIntensity={isEvent ? 0.5 : 0.15}
-          roughness={0.7}
+          emissiveIntensity={isEvent ? 0.6 : 0.3}
+          roughness={0.6}
           metalness={0.1}
         />
       </RoundedBox>
