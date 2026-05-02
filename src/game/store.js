@@ -21,12 +21,13 @@ const createInitialPieces = () => {
 };
 
 const createPlayers = (playerConfigs) => {
-  // playerConfigs: array of { color, isAI, name }
+  // playerConfigs: array of { color, isAI, name, aiDifficulty }
   return playerConfigs.map((config, index) => ({
     id: index,
     color: config.color,
     name: config.name || `${config.color} Player`,
     isAI: config.isAI || false,
+    aiDifficulty: config.aiDifficulty || 'medium',
   }));
 };
 
@@ -83,7 +84,7 @@ export const useGameStore = create((set, get) => ({
     // Check if first player is AI and start its turn
     const state = get();
     if (state.players[0]?.isAI) {
-      const delay = getAIDelay('roll');
+      const delay = getAIDelay('roll', state.players[0].aiDifficulty);
       setTimeout(() => {
         get().executeAITurn();
       }, delay);
@@ -101,7 +102,7 @@ export const useGameStore = create((set, get) => ({
     // Check if current player is AI
     const { players, currentPlayerIndex } = get();
     if (players[currentPlayerIndex]?.isAI) {
-      const delay = getAIDelay('select');
+      const delay = getAIDelay('select', players[currentPlayerIndex].aiDifficulty);
       setTimeout(() => {
         get().executeAISelect();
       }, delay);
@@ -131,7 +132,7 @@ export const useGameStore = create((set, get) => ({
     
     // If AI player, execute move after delay
     if (player.isAI) {
-      const delay = getAIDelay('move');
+      const delay = getAIDelay('move', player.aiDifficulty);
       setTimeout(() => {
         get().movePiece(pieceId);
       }, delay);
@@ -284,7 +285,7 @@ export const useGameStore = create((set, get) => ({
       // Rolled 6, same player gets another turn - if AI, execute
       const { players, currentPlayerIndex } = get();
       if (players[currentPlayerIndex]?.isAI) {
-        const delay = getAIDelay('roll');
+        const delay = getAIDelay('roll', players[currentPlayerIndex].aiDifficulty);
         setTimeout(() => {
           get().executeAITurn();
         }, delay);
@@ -303,7 +304,7 @@ export const useGameStore = create((set, get) => ({
     
     // If next player is AI, start their turn
     if (players[nextIndex]?.isAI) {
-      const delay = getAIDelay('roll');
+      const delay = getAIDelay('roll', players[nextIndex].aiDifficulty);
       setTimeout(() => {
         get().executeAITurn();
       }, delay);
@@ -312,9 +313,10 @@ export const useGameStore = create((set, get) => ({
   
   // AI execution methods
   executeAITurn: () => {
-    const { phase, isRolling } = get();
+    const { phase, isRolling, players, currentPlayerIndex } = get();
     if (phase !== 'roll') return;
     
+    set({ isAIThinking: true });
     get().startRolling();
     setTimeout(() => {
       get().rollDice();
@@ -328,7 +330,7 @@ export const useGameStore = create((set, get) => ({
     const player = players[currentPlayerIndex];
     if (!player?.isAI) return;
     
-    const bestMove = getBestMove(pieces, diceValue, player.color);
+    const bestMove = getBestMove(pieces, diceValue, player.color, player.aiDifficulty);
     if (bestMove) {
       get().selectPiece(bestMove.pieceId);
     } else {

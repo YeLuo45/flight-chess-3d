@@ -9,6 +9,7 @@ export default function GameHUD() {
     players,
     diceValue,
     isRolling,
+    isAIThinking,
     pieces,
     rollDice,
     startRolling,
@@ -62,8 +63,14 @@ export default function GameHUD() {
           />
           <span className="text-white font-bold text-lg">
             {currentPlayer?.name || `Player ${currentPlayerIndex + 1}`} 的回合
-            {isAI && <span className="ml-2 text-sm text-yellow-300">(AI思考中...)</span>}
           </span>
+          {/* AI Thinking Indicator */}
+          {isAIThinking && (
+            <div className="flex items-center gap-2 ml-2">
+              <div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+              <span className="text-yellow-300 text-sm font-medium">AI思考中...</span>
+            </div>
+          )}
           <span className="text-white/80 text-sm">
             {phase === 'roll' && (isAI ? 'AI正在投掷...' : '点击骰子投掷')}
             {phase === 'select' && (isAI ? 'AI正在选择...' : '选择一个棋子移动')}
