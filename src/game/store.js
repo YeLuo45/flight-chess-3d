@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { COLORS, PLAYER_COLORS, START_POSITIONS, getEventType } from './constants';
 import { getBestMove, getAIDelay } from './ai';
+import { updateStats } from './stats';
 
 const createInitialPieces = () => {
   const pieces = [];
@@ -67,9 +68,22 @@ export const useGameStore = create((set, get) => ({
   // Actions
   setMode: (mode) => set({ mode }),
   
-  startGame: (playerConfigs) => {
+  startGame: (playerConfigs, playerColor) => {
+    // Assign colors: human player gets playerColor, AI players get remaining colors
+    const availableColors = ['red', 'blue', 'yellow', 'green'].filter(c => c !== playerColor);
+    const aiColors = availableColors.slice(0, playerConfigs.filter(p => p.isAI).length);
+    let aiColorIndex = 0;
+    
+    const finalConfigs = playerConfigs.map((config, index) => {
+      if (!config.isAI) {
+        return { ...config, color: playerColor };
+      } else {
+        return { ...config, color: aiColors[aiColorIndex++] || 'blue' };
+      }
+    });
+
     set({
-      players: createPlayers(playerConfigs),
+      players: createPlayers(finalConfigs),
       currentPlayerIndex: 0,
       pieces: createInitialPieces(),
       phase: 'roll',
@@ -255,6 +269,20 @@ export const useGameStore = create((set, get) => ({
     const playerPieces = newPieces.filter(p => p.color === piece.color);
     const allInFinish = playerPieces.every(p => p.isInFinish);
     const winner = allInFinish ? player : null;
+    
+    // Update stats if game ended
+    if (winner) {
+      const state = get();
+      const humanPlayer = state.players.find(p => !p.isAI);
+      const isHumanWin = humanPlayer && winner.color === humanPlayer.color;
+      const highestAIDifficulty = state.players
+        .filter(p => p.isAI)
+        .reduce((highest, p) => {
+          const diffOrder = ['easy', 'medium', 'hard'];
+          return diffOrder.indexOf(p.aiDifficulty) > diffOrder.indexOf(highest) ? p.aiDifficulty : highest;
+        }, 'easy');
+      updateStats(isHumanWin, highestAIDifficulty);
+    }
     
     // Determine next phase
     let nextPhase = 'move';
