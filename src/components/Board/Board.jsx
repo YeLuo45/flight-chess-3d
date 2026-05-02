@@ -3,16 +3,15 @@ import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import { COLORS, MAIN_TRACK, RUNWAYS, getEventType, EVENT_TYPES } from '../../game/constants';
 
-// Rainbow colors for main track - each position gets a different vibrant color
+// Rainbow colors for main track - bright vibrant colors
 const TRACK_COLORS = [
-  '#FFCDD2', '#EF9A9A', '#E57373', '#EF5350', '#F44336', '#D32F2F', '#C62828', '#B71C1C', // Red shades
-  '#FFCDD2', '#EF9A9A', '#E57373', '#EF5350', '#F44336', '#D32F2F', '#C62828', '#B71C1C', // Red shades
-  '#BBDEFB', '#90CAF9', '#64B5F6', '#42A5F5', '#2196F3', '#1E88E5', '#1976D2', '#1565C0', // Blue shades
-  '#FFF9C4', '#FFF59D', '#FFF176', '#FFEE58', '#FFEB3B', '#FDD835', '#FBC02D', '#F9A825', // Yellow shades
-  '#C8E6C9', '#A5D6A7', '#81C784', '#66BB6A', '#4CAF50', '#43A047', '#388E3C', '#2E7D32', // Green shades
-  '#F8BBD9', '#F48FB1', '#F06292', '#EC407A', '#E91E63', '#D81B60', '#C2185B', '#AD1457', // Pink shades
-  '#E1BEE7', '#CE93D8', '#BA68C8', '#AB47BC', '#9C27B0', '#8E24AA', '#7B1FA2', '#6A1B9A', // Purple shades
-  '#B2EBF2', '#80DEEA', '#4DD0E1', '#26C6DA', '#00BCD4', '#00ACC1', '#0097A7', '#00838F', // Cyan shades
+  '#E53935', '#D32F2F', '#C62828', '#B71C1C', '#C62828', '#D32F2F', '#E53935', '#C62828', // Red
+  '#1E88E5', '#1976D2', '#1565C0', '#0D47A1', '#1565C0', '#1976D2', '#1E88E5', '#1565C0', // Blue
+  '#FDD835', '#FBC02D', '#F9A825', '#F57F17', '#F9A825', '#FBC02D', '#FDD835', '#F9A825', // Yellow
+  '#43A047', '#388E3C', '#2E7D32', '#1B5E20', '#2E7D32', '#388E3C', '#43A047', '#388E3C', // Green
+  '#E91E63', '#C2185B', '#AD1457', '#880E4F', '#AD1457', '#C2185B', '#E91E63', '#C2185B', // Pink
+  '#9C27B0', '#7B1FA2', '#6A1B9A', '#4A148C', '#6A1B9A', '#7B1FA2', '#9C27B0', '#7B1FA2', // Purple
+  '#00BCD4', '#0097A7', '#00838F', '#006064', '#00838F', '#0097A7', '#00BCD4', '#0097A7', // Cyan
 ];
 
 function Square({ position, color, isEvent, eventType, index }) {
@@ -50,9 +49,9 @@ function Square({ position, color, isEvent, eventType, index }) {
         <meshStandardMaterial
           color={baseColor}
           emissive={baseColor}
-          emissiveIntensity={isEvent ? 0.6 : 0.3}
-          roughness={0.6}
-          metalness={0.1}
+          emissiveIntensity={isEvent ? 1.2 : 0.8}
+          roughness={0.4}
+          metalness={0.2}
         />
       </RoundedBox>
       
