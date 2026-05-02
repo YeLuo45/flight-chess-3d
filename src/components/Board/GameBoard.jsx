@@ -24,9 +24,9 @@ export default function GameBoard() {
       camera={{ position: [18, 18, 18], fov: 55 }}
       style={{ width: '100%', height: '100%' }}
     >
-      {/* Colorful gradient background - dark purple to deep blue */}
-      <color attach="background" args={['#1a0a2e']} />
-      <fog attach="fog" args={['#1a0a2e', 25, 50]} />
+      {/* Colorful gradient background - light blue sky */}
+      <color attach="background" args={['#87CEEB']} />
+      <fog attach="fog" args={['#87CEEB', 30, 60]} />
       
       {/* Lighting */}
       <ambientLight intensity={0.8} color="#FFFFFF" />

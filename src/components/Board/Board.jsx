@@ -5,20 +5,14 @@ import { COLORS, MAIN_TRACK, RUNWAYS, getEventType, EVENT_TYPES } from '../../ga
 
 // Rainbow colors for main track - each position gets a different vibrant color
 const TRACK_COLORS = [
-  '#FF6B6B', '#FF8E53', '#FFA502', '#FFD93D', // red-orange-yellow
-  '#6BCB77', '#4ECDC4', '#45B7D1', '#5C7AEA', // green-cyan-blue-indigo
-  '#9B59B6', '#E91E63', '#FF5722', '#795548', // purple-pink-brown
-  '#F44336', '#FF9800', '#FFEB3B', '#8BC34A', // red-orange-yellow-green
-  '#03A9F4', '#00BCD4', '#009688', '#00695C', // blue-cyan-teal
-  '#7E57C2', '#AB47BC', '#EC407A', '#EF5350', // purple-pink-red
-  '#FF7043', '#FFCA28', '#66BB6A', '#26A69A', // orange-yellow-green-teal
-  '#5C6BC0', '#7E57C2', '#AB47BC', '#8D6E63', // indigo-purple-brown
-  '#78909C', '#90A4AE', '#B0BEC5', '#CFD8DC', // gray shades
-  '#FF1744', '#FF5252', '#FF7575', '#FFAB91', '#FFCCBC', // red shades
-  '#18FFFF', '#84FFFF', '#A7FFEB', '#B9F6CA', // cyan-green shades
-  '#FFE082', '#FFD54F', '#FFCA28', '#FFC107', // amber-yellow shades
-  '#CE93D8', '#BA68C8', '#AB47BC', '#8E24AA', // purple shades
-  '#80DEEA', '#4DD0E1', '#26C6DA', '#00ACC1', // light-blue shades
+  '#FFCDD2', '#EF9A9A', '#E57373', '#EF5350', '#F44336', '#D32F2F', '#C62828', '#B71C1C', // Red shades
+  '#FFCDD2', '#EF9A9A', '#E57373', '#EF5350', '#F44336', '#D32F2F', '#C62828', '#B71C1C', // Red shades
+  '#BBDEFB', '#90CAF9', '#64B5F6', '#42A5F5', '#2196F3', '#1E88E5', '#1976D2', '#1565C0', // Blue shades
+  '#FFF9C4', '#FFF59D', '#FFF176', '#FFEE58', '#FFEB3B', '#FDD835', '#FBC02D', '#F9A825', // Yellow shades
+  '#C8E6C9', '#A5D6A7', '#81C784', '#66BB6A', '#4CAF50', '#43A047', '#388E3C', '#2E7D32', // Green shades
+  '#F8BBD9', '#F48FB1', '#F06292', '#EC407A', '#E91E63', '#D81B60', '#C2185B', '#AD1457', // Pink shades
+  '#E1BEE7', '#CE93D8', '#BA68C8', '#AB47BC', '#9C27B0', '#8E24AA', '#7B1FA2', '#6A1B9A', // Purple shades
+  '#B2EBF2', '#80DEEA', '#4DD0E1', '#26C6DA', '#00BCD4', '#00ACC1', '#0097A7', '#00838F', // Cyan shades
 ];
 
 function Square({ position, color, isEvent, eventType, index }) {
@@ -148,7 +142,7 @@ export default function Board() {
         ))
       )}
       
-      {/* Center finish zone - golden rainbow */}
+      {/* Center finish zone - bright orange/gold like reference */}
       <group position={[0, 0.05, 0]}>
         <RoundedBox
           args={[3, 0.2, 3]}
@@ -158,28 +152,28 @@ export default function Board() {
           receiveShadow
         >
           <meshStandardMaterial
-            color="#FF6B6B"
-            emissive="#FF6B6B"
-            emissiveIntensity={0.4}
+            color="#FF8F00"
+            emissive="#FF8F00"
+            emissiveIntensity={0.3}
             roughness={0.5}
             metalness={0.3}
           />
         </RoundedBox>
         
-        {/* Trophy icon in center - colorful */}
+        {/* Trophy icon in center - golden yellow */}
         <mesh position={[0, 0.5, 0]}>
           <cylinderGeometry args={[0.3, 0.4, 0.6, 8]} />
           <meshStandardMaterial
-            color="#00FFFF"
-            emissive="#00FFFF"
-            emissiveIntensity={0.5}
+            color="#FFC107"
+            emissive="#FFC107"
+            emissiveIntensity={0.4}
             metalness={0.8}
             roughness={0.2}
           />
         </mesh>
       </group>
       
-      {/* Base platform - purple gradient */}
+      {/* Base platform - white/cream */}
       <RoundedBox
         args={[18, 0.3, 18]}
         radius={1}
@@ -187,7 +181,7 @@ export default function Board() {
         position={[0, -0.15, 0]}
         receiveShadow
       >
-        <meshStandardMaterial color="#2d1b4e" roughness={0.9} metalness={0.1} />
+        <meshStandardMaterial color="#F5F0E6" roughness={0.9} metalness={0.1} />
       </RoundedBox>
       
       {/* Start area markers */}
