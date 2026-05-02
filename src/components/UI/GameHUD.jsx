@@ -20,8 +20,11 @@ export default function GameHUD() {
 
   const currentPlayer = players[currentPlayerIndex];
   const currentColor = currentPlayer?.color;
+  const isAI = currentPlayer?.isAI;
 
   const handleRollClick = () => {
+    // Don't allow manual roll for AI's turn
+    if (isAI) return;
     if (phase === 'roll' && !isRolling) {
       startRolling();
       setTimeout(() => {
@@ -31,6 +34,8 @@ export default function GameHUD() {
   };
 
   const handlePieceClick = (pieceId) => {
+    // Don't allow manual piece selection for AI's turn
+    if (isAI) return;
     if (phase === 'select') {
       selectPiece(pieceId);
     } else if (phase === 'move' && selectedPieceId === pieceId) {
@@ -57,11 +62,12 @@ export default function GameHUD() {
           />
           <span className="text-white font-bold text-lg">
             {currentPlayer?.name || `Player ${currentPlayerIndex + 1}`} 的回合
+            {isAI && <span className="ml-2 text-sm text-yellow-300">(AI思考中...)</span>}
           </span>
           <span className="text-white/80 text-sm">
-            {phase === 'roll' && '点击骰子投掷'}
-            {phase === 'select' && '选择一个棋子移动'}
-            {phase === 'move' && '确认移动位置'}
+            {phase === 'roll' && (isAI ? 'AI正在投掷...' : '点击骰子投掷')}
+            {phase === 'select' && (isAI ? 'AI正在选择...' : '选择一个棋子移动')}
+            {phase === 'move' && (isAI ? 'AI移动中...' : '确认移动位置')}
           </span>
         </div>
       </div>
@@ -72,13 +78,15 @@ export default function GameHUD() {
           value={diceValue}
           isRolling={isRolling}
           onClick={handleRollClick}
-          disabled={phase !== 'roll'}
+          disabled={phase !== 'roll' || isAI}
         />
       </div>
 
       {/* Player pieces status */}
       <div className="absolute top-20 left-4 bg-gray-900/80 backdrop-blur-sm rounded-xl p-4 z-10">
-        <h3 className="text-white font-bold mb-2 text-sm">我的棋子</h3>
+        <h3 className="text-white font-bold mb-2 text-sm">
+          {isAI ? 'AI棋子' : '我的棋子'}
+        </h3>
         <div className="flex gap-2">
           {playerPieces.map((piece) => {
             const canMove = canPieceMove(piece.id);
@@ -87,7 +95,7 @@ export default function GameHUD() {
               <button
                 key={piece.id}
                 onClick={() => handlePieceClick(piece.id)}
-                disabled={phase !== 'select' && phase !== 'move'}
+                disabled={phase !== 'select' && phase !== 'move' || isAI}
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs transition-all ${
                   !canMove ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'
                 } ${isSelected ? 'ring-4 ring-white' : ''}`}
@@ -105,9 +113,17 @@ export default function GameHUD() {
 
       {/* Instructions */}
       <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 text-white/80 text-sm text-center z-10">
-        {phase === 'roll' && '点击骰子投掷 (需投出6点起飞)'}
-        {phase === 'select' && `投出了 ${diceValue} 点！选择一个棋子移动`}
-        {phase === 'move' && '再次点击确认移动'}
+        {isAI ? (
+          phase === 'roll' ? 'AI正在投掷骰子...' :
+          phase === 'select' ? `AI投出了 ${diceValue} 点！正在选择...` :
+          'AI正在移动...'
+        ) : (
+          <>
+            {phase === 'roll' && '点击骰子投掷 (需投出6点起飞)'}
+            {phase === 'select' && `投出了 ${diceValue} 点！选择一个棋子移动`}
+            {phase === 'move' && '再次点击确认移动'}
+          </>
+        )}
       </div>
     </>
   );

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { COLORS, PLAYER_COLORS, START_POSITIONS, getEventType } from './constants';
+import { getBestMove, getAIDelay } from './ai';
 
 const createInitialPieces = () => {
   const pieces = [];
@@ -19,12 +20,13 @@ const createInitialPieces = () => {
   return pieces;
 };
 
-const createPlayers = (count) => {
-  return PLAYER_COLORS.slice(0, count).map((color, index) => ({
+const createPlayers = (playerConfigs) => {
+  // playerConfigs: array of { color, isAI, name }
+  return playerConfigs.map((config, index) => ({
     id: index,
-    color,
-    name: `${color} Player`,
-    isAI: false,
+    color: config.color,
+    name: config.name || `${config.color} Player`,
+    isAI: config.isAI || false,
   }));
 };
 
@@ -57,13 +59,16 @@ export const useGameStore = create((set, get) => ({
   
   // Winner
   winner: null,
+
+  // AI state
+  isAIThinking: false,
   
   // Actions
   setMode: (mode) => set({ mode }),
   
-  startGame: (playerCount) => {
+  startGame: (playerConfigs) => {
     set({
-      players: createPlayers(playerCount),
+      players: createPlayers(playerConfigs),
       currentPlayerIndex: 0,
       pieces: createInitialPieces(),
       phase: 'roll',
@@ -72,7 +77,17 @@ export const useGameStore = create((set, get) => ({
       winner: null,
       lastEvent: null,
       lastEventResult: null,
+      isAIThinking: false,
     });
+    
+    // Check if first player is AI and start its turn
+    const state = get();
+    if (state.players[0]?.isAI) {
+      const delay = getAIDelay('roll');
+      setTimeout(() => {
+        get().executeAITurn();
+      }, delay);
+    }
   },
   
   rollDice: () => {
@@ -82,6 +97,16 @@ export const useGameStore = create((set, get) => ({
       isRolling: false,
       phase: 'select',
     });
+    
+    // Check if current player is AI
+    const { players, currentPlayerIndex } = get();
+    if (players[currentPlayerIndex]?.isAI) {
+      const delay = getAIDelay('select');
+      setTimeout(() => {
+        get().executeAISelect();
+      }, delay);
+    }
+    
     return value;
   },
   
@@ -103,6 +128,15 @@ export const useGameStore = create((set, get) => ({
     if (!canMove) return false;
     
     set({ selectedPieceId: pieceId, phase: 'move' });
+    
+    // If AI player, execute move after delay
+    if (player.isAI) {
+      const delay = getAIDelay('move');
+      setTimeout(() => {
+        get().movePiece(pieceId);
+      }, delay);
+    }
+    
     return true;
   },
   
@@ -243,9 +277,18 @@ export const useGameStore = create((set, get) => ({
       selectedPieceId: null,
     });
     
-    // Move to next player if needed
-    if (nextPhase === 'roll' && !diceValue === 6) {
+    // Move to next player if needed (handle the bug: diceValue === 6 was being negated incorrectly)
+    if (nextPhase === 'roll' && !(diceValue === 6 && !wasLaunched)) {
       get().nextPlayer();
+    } else if (nextPhase === 'roll' && (diceValue === 6 && !wasLaunched)) {
+      // Rolled 6, same player gets another turn - if AI, execute
+      const { players, currentPlayerIndex } = get();
+      if (players[currentPlayerIndex]?.isAI) {
+        const delay = getAIDelay('roll');
+        setTimeout(() => {
+          get().executeAITurn();
+        }, delay);
+      }
     }
   },
   
@@ -257,6 +300,41 @@ export const useGameStore = create((set, get) => ({
       diceValue: null,
       phase: 'roll',
     });
+    
+    // If next player is AI, start their turn
+    if (players[nextIndex]?.isAI) {
+      const delay = getAIDelay('roll');
+      setTimeout(() => {
+        get().executeAITurn();
+      }, delay);
+    }
+  },
+  
+  // AI execution methods
+  executeAITurn: () => {
+    const { phase, isRolling } = get();
+    if (phase !== 'roll') return;
+    
+    get().startRolling();
+    setTimeout(() => {
+      get().rollDice();
+    }, 800);
+  },
+  
+  executeAISelect: () => {
+    const { pieces, diceValue, players, currentPlayerIndex, phase } = get();
+    if (phase !== 'select') return;
+    
+    const player = players[currentPlayerIndex];
+    if (!player?.isAI) return;
+    
+    const bestMove = getBestMove(pieces, diceValue, player.color);
+    if (bestMove) {
+      get().selectPiece(bestMove.pieceId);
+    } else {
+      // No valid moves, skip turn
+      get().nextPlayer();
+    }
   },
   
   handleEvent: (eventResult) => {
@@ -284,6 +362,7 @@ export const useGameStore = create((set, get) => ({
       lastEvent: null,
       lastEventResult: null,
       winner: null,
+      isAIThinking: false,
     });
   },
 }));
