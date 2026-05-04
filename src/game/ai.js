@@ -26,15 +26,14 @@ function getMovablePieces(pieces, diceValue, playerColor) {
       const runwaySteps = piece.position - 52;
       const playerColorIndex = PLAYER_COLORS.indexOf(playerColor);
       const runwayIndex = runwaySteps - playerColorIndex * 4;
-      const newRunwayIndex = runwayIndex + diceValue;
+      const stepsNeeded = 4 - runwayIndex;
 
-      if (newRunwayIndex >= 4) {
+      if (diceValue >= stepsNeeded) {
+        // Can finish
         canMove = true;
         newPosition = 100 + playerColorIndex;
-      } else if (diceValue >= newRunwayIndex + 1) {
-        canMove = true;
-        newPosition = 52 + playerColorIndex * 4 + newRunwayIndex;
       }
+      // Note: Cannot move partially in runway - must roll exact or more to finish
     }
 
     if (canMove) {
@@ -229,18 +228,16 @@ export function getBestMove(pieces, diceValue, playerColor, difficulty = 'medium
     } else if (piece.position >= 52) {
       // In runway
       const runwaySteps = piece.position - 52;
-      const playerColorIndex = PLAYER_COLORS.indexOf(playerColor);
+      const playerColorIndex = PLAYER_COLORS.indexOf(piece.color);
       const runwayIndex = runwaySteps - playerColorIndex * 4;
-      const newRunwayIndex = runwayIndex + diceValue;
+      const stepsNeeded = 4 - runwayIndex;
 
-      if (newRunwayIndex >= 4) {
+      if (diceValue >= stepsNeeded) {
         // Can finish
         canMove = true;
         newPosition = 100 + playerColorIndex;
-      } else if (diceValue >= newRunwayIndex + 1) {
-        canMove = true;
-        newPosition = 52 + playerColorIndex * 4 + newRunwayIndex;
       }
+      // Note: Cannot move partially in runway - must roll exact or more to finish
     }
 
     if (canMove) {
