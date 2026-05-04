@@ -1,20 +1,33 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
-import { COLORS, getPositionData } from '../../game/constants';
+import { COLORS } from '../../game/constants';
+import { getSkin } from '../../game/skins';
+import { getMapVariant, getPositionDataForVariant } from '../../game/mapVariants';
+import { useGameStore } from '../../game/store';
 import * as THREE from 'three';
 
-export default function Piece3D({ piece, isSelected, canMove, onClick }) {
+export default function Piece3D({ piece, isSelected, canMove, onClick, skin: skinProp }) {
   const meshRef = useRef();
   const [hovered, setHovered] = useState(false);
   const targetScaleRef = useRef(new THREE.Vector3(1, 1, 1));
 
-  const posData = getPositionData(piece.position, piece.color);
+  const skinId = useGameStore((state) => state.skin);
+  const mapVariantId = useGameStore((state) => state.mapVariant);
+  
+  const skin = skinProp || getSkin(skinId);
+  const mapVariant = getMapVariant(mapVariantId);
+  
+  const posData = getPositionDataForVariant(piece.position, piece.color, mapVariant);
 
   useFrame((state) => {
     if (meshRef.current) {
-      // Floating animation
-      meshRef.current.position.y = (posData?.y || 0.2) + Math.sin(state.clock.elapsedTime * 2 + piece.id.charCodeAt(0)) * 0.05;
+      // Floating animation (only if skin allows)
+      if (skin.effects.pieceFloat) {
+        meshRef.current.position.y = (posData?.y || 0.2) + Math.sin(state.clock.elapsedTime * 2 + piece.id.charCodeAt(0)) * 0.05;
+      } else {
+        meshRef.current.position.y = posData?.y || 0.2;
+      }
 
       // Selection/hover scale with smooth lerp
       const targetScale = isSelected ? 1.2 : hovered && canMove ? 1.1 : 1;
@@ -24,6 +37,12 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
   });
 
   if (!posData) return null;
+
+  const emissiveIntensity = isSelected 
+    ? skin.piece.selectedEmissive 
+    : canMove 
+      ? skin.piece.canMoveEmissive 
+      : skin.piece.emissiveIntensity;
 
   return (
     <group
@@ -55,9 +74,9 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
         <meshStandardMaterial
           color={COLORS[piece.color]}
           emissive={COLORS[piece.color]}
-          emissiveIntensity={isSelected ? 0.4 : canMove ? 0.2 : 0.1}
-          roughness={0.6}
-          metalness={0.2}
+          emissiveIntensity={emissiveIntensity}
+          roughness={skin.piece.roughness}
+          metalness={skin.piece.metalness}
         />
       </RoundedBox>
 
@@ -67,9 +86,9 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
         <meshStandardMaterial
           color={COLORS[piece.color]}
           emissive={COLORS[piece.color]}
-          emissiveIntensity={isSelected ? 0.4 : 0.2}
-          roughness={0.5}
-          metalness={0.3}
+          emissiveIntensity={emissiveIntensity}
+          roughness={skin.piece.roughness}
+          metalness={skin.piece.metalness}
         />
       </mesh>
 
@@ -78,8 +97,8 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
         <mesh position={[0, 0.7, 0]}>
           <sphereGeometry args={[0.15, 8, 8]} />
           <meshStandardMaterial
-            color="#00ffff"
-            emissive="#00ffff"
+            color={skin.effects.shieldColor}
+            emissive={skin.effects.shieldColor}
             emissiveIntensity={0.5}
             transparent
             opacity={0.7}
@@ -92,8 +111,8 @@ export default function Piece3D({ piece, isSelected, canMove, onClick }) {
         <mesh position={[0, 0.7, 0]}>
           <torusGeometry args={[0.15, 0.05, 8, 16]} />
           <meshStandardMaterial
-            color="#FFD700"
-            emissive="#FFD700"
+            color={skin.board.trophy}
+            emissive={skin.board.trophy}
             emissiveIntensity={0.8}
           />
         </mesh>

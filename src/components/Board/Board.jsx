@@ -1,20 +1,12 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
-import { COLORS, MAIN_TRACK, RUNWAYS, getEventType, EVENT_TYPES } from '../../game/constants';
+import { useGameStore } from '../../game/store';
+import { getSkin, SKINS } from '../../game/skins';
+import { getMapVariant } from '../../game/mapVariants';
+import { COLORS, getEventType, EVENT_TYPES } from '../../game/constants';
 
-// Rainbow colors for main track - bright vibrant colors
-const TRACK_COLORS = [
-  '#E53935', '#D32F2F', '#C62828', '#B71C1C', '#C62828', '#D32F2F', '#E53935', '#C62828', // Red
-  '#1E88E5', '#1976D2', '#1565C0', '#0D47A1', '#1565C0', '#1976D2', '#1E88E5', '#1565C0', // Blue
-  '#FDD835', '#FBC02D', '#F9A825', '#F57F17', '#F9A825', '#FBC02D', '#FDD835', '#F9A825', // Yellow
-  '#43A047', '#388E3C', '#2E7D32', '#1B5E20', '#2E7D32', '#388E3C', '#43A047', '#388E3C', // Green
-  '#E91E63', '#C2185B', '#AD1457', '#880E4F', '#AD1457', '#C2185B', '#E91E63', '#C2185B', // Pink
-  '#9C27B0', '#7B1FA2', '#6A1B9A', '#4A148C', '#6A1B9A', '#7B1FA2', '#9C27B0', '#7B1FA2', // Purple
-  '#00BCD4', '#0097A7', '#00838F', '#006064', '#00838F', '#0097A7', '#00BCD4', '#0097A7', // Cyan
-];
-
-function Square({ position, color, isEvent, eventType, index }) {
+function Square({ position, color, isEvent, eventType, index, skin }) {
   const meshRef = useRef();
   const isLucky = eventType === EVENT_TYPES.LUCKY;
   const isCurse = eventType === EVENT_TYPES.CURSE;
@@ -22,21 +14,18 @@ function Square({ position, color, isEvent, eventType, index }) {
   const isSwap = eventType === EVENT_TYPES.SWAP;
   
   useFrame((state) => {
-    if (meshRef.current && isEvent) {
-      // Pulsing glow for event squares
+    if (meshRef.current && isEvent && skin.effects.eventGlow) {
       const pulse = Math.sin(state.clock.elapsedTime * 3) * 0.3 + 0.7;
       meshRef.current.material.emissiveIntensity = pulse;
     }
   });
   
-  // Use rainbow color for main track, fall back to color's own color for runway/safe zones
   const baseColor = (index !== undefined && position.segment === 'arm') 
-    ? TRACK_COLORS[index % TRACK_COLORS.length] 
+    ? skin.board.track[index % skin.board.track.length] 
     : (color ? COLORS[color] : '#ffffff');
   
   return (
     <group position={[position.x, 0, position.z]}>
-      {/* Square base */}
       <RoundedBox
         ref={meshRef}
         args={[0.8, 0.15, 0.8]}
@@ -49,13 +38,12 @@ function Square({ position, color, isEvent, eventType, index }) {
         <meshStandardMaterial
           color={baseColor}
           emissive={baseColor}
-          emissiveIntensity={isEvent ? 1.2 : 0.8}
+          emissiveIntensity={isEvent ? 1.2 : skin.board.runway}
           roughness={0.4}
           metalness={0.2}
         />
       </RoundedBox>
       
-      {/* Event icon */}
       {isEvent && (
         <group position={[0, 0.5, 0]}>
           {isLucky && (
@@ -88,7 +76,7 @@ function Square({ position, color, isEvent, eventType, index }) {
   );
 }
 
-function RunwaySquare({ position, color, index }) {
+function RunwaySquare({ position, color, index, skin }) {
   return (
     <group position={[position.x, position.y, position.z]}>
       <RoundedBox
@@ -102,7 +90,7 @@ function RunwaySquare({ position, color, index }) {
         <meshStandardMaterial
           color={COLORS[color]}
           emissive={COLORS[color]}
-          emissiveIntensity={0.1}
+          emissiveIntensity={skin.board.runway}
           roughness={0.8}
           metalness={0.2}
         />
@@ -112,10 +100,14 @@ function RunwaySquare({ position, color, index }) {
 }
 
 export default function Board() {
+  const { skin: skinId, mapVariant: mapVariantId } = useGameStore();
+  const skin = getSkin(skinId);
+  const mapVariant = getMapVariant(mapVariantId);
+  
   return (
     <group>
       {/* Main track squares */}
-      {MAIN_TRACK.map((pos, index) => {
+      {mapVariant.mainTrack.map((pos, index) => {
         const eventType = getEventType(index);
         return (
           <Square
@@ -125,23 +117,25 @@ export default function Board() {
             isEvent={!!eventType}
             eventType={eventType}
             index={index}
+            skin={skin}
           />
         );
       })}
       
       {/* Runway squares */}
-      {Object.entries(RUNWAYS).map(([color, squares]) =>
+      {Object.entries(mapVariant.runways).map(([color, squares]) =>
         squares.map((pos, index) => (
           <RunwaySquare
             key={`${color}-runway-${index}`}
             position={pos}
             color={color}
             index={index}
+            skin={skin}
           />
         ))
       )}
       
-      {/* Center finish zone - bright orange/gold like reference */}
+      {/* Center finish zone */}
       <group position={[0, 0.05, 0]}>
         <RoundedBox
           args={[3, 0.2, 3]}
@@ -151,20 +145,20 @@ export default function Board() {
           receiveShadow
         >
           <meshStandardMaterial
-            color="#FF8F00"
-            emissive="#FF8F00"
+            color={skin.board.finish}
+            emissive={skin.board.finish}
             emissiveIntensity={0.3}
             roughness={0.5}
             metalness={0.3}
           />
         </RoundedBox>
         
-        {/* Trophy icon in center - golden yellow */}
+        {/* Trophy icon in center */}
         <mesh position={[0, 0.5, 0]}>
           <cylinderGeometry args={[0.3, 0.4, 0.6, 8]} />
           <meshStandardMaterial
-            color="#FFC107"
-            emissive="#FFC107"
+            color={skin.board.trophy}
+            emissive={skin.board.trophy}
             emissiveIntensity={0.4}
             metalness={0.8}
             roughness={0.2}
@@ -172,15 +166,15 @@ export default function Board() {
         </mesh>
       </group>
       
-      {/* Base platform - white/cream */}
+      {/* Base platform */}
       <RoundedBox
-        args={[18, 0.3, 18]}
+        args={[mapVariant.boardSize, 0.3, mapVariant.boardSize]}
         radius={1}
         smoothness={4}
         position={[0, -0.15, 0]}
         receiveShadow
       >
-        <meshStandardMaterial color="#F5F0E6" roughness={0.9} metalness={0.1} />
+        <meshStandardMaterial color={skin.board.base} roughness={0.9} metalness={0.1} />
       </RoundedBox>
       
       {/* Start area markers */}

@@ -36,6 +36,10 @@ export const useGameStore = create((set, get) => ({
   // Game mode
   mode: 'classic', // 'classic' | 'event'
   
+  // Skin and map variant
+  skin: 'classic',
+  mapVariant: 'classic',
+  
   // Players
   players: [],
   
@@ -67,6 +71,8 @@ export const useGameStore = create((set, get) => ({
   
   // Actions
   setMode: (mode) => set({ mode }),
+  setSkin: (skin) => set({ skin }),
+  setMapVariant: (mapVariant) => set({ mapVariant }),
   
   startGame: (playerConfigs, playerColor) => {
     // Assign colors: human player gets playerColor, AI players get remaining colors
@@ -382,6 +388,8 @@ export const useGameStore = create((set, get) => ({
   resetGame: () => {
     set({
       mode: 'classic',
+      skin: 'classic',
+      mapVariant: 'classic',
       players: [],
       currentPlayerIndex: 0,
       pieces: createInitialPieces(),

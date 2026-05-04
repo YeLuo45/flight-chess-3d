@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useGameStore } from '../../game/store';
 import { PLAYER_COLORS } from '../../game/constants';
 import { getStats } from '../../game/stats';
+import { SKIN_LIST } from '../../game/skins';
+import { MAP_VARIANT_LIST } from '../../game/mapVariants';
 
 const PLAYER_COLORS_LIST = ['#E53935', '#1E88E5', '#FDD835', '#43A047'];
 const PLAYER_NAMES = ['红方', '蓝方', '黄方', '绿方'];
@@ -12,30 +14,51 @@ const DIFFICULTIES = [
   { value: 'hard', label: '困难', color: 'bg-red-500 text-white' },
 ];
 
+const SKIN_THUMBNAILS = {
+  classic: { bg: '#87CEEB', icon: '🎨' },
+  neon: { bg: '#0f0f23', icon: '🌃' },
+  wooden: { bg: '#8B4513', icon: '🪵' },
+  crystal: { bg: '#E0FFFF', icon: '💎' },
+  galaxy: { bg: '#000011', icon: '🌌' },
+  retro: { bg: '#2F4F4F', icon: '👾' },
+};
+
+const MAP_THUMBNAILS = {
+  classic: { bg: '#4a90d9', icon: '✚' },
+  square: { bg: '#4ad98a', icon: '◻' },
+  diamond: { bg: '#d94a90', icon: '◇' },
+};
+
 export default function StartScreen() {
   const [mode, setMode] = useState('classic');
   const [playerCount, setPlayerCount] = useState(2);
   const [playerColor, setPlayerColor] = useState('red');
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [showSkinModal, setShowSkinModal] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  
   // Each player: { isAI: bool, aiDifficulty: 'easy'|'medium'|'hard' }
   const [playerConfigs, setPlayerConfigs] = useState(() => {
     const defaultConfigs = [];
     for (let i = 0; i < 4; i++) {
       defaultConfigs.push({
-        isAI: i > 0, // First player human, others AI
+        isAI: i > 0,
         aiDifficulty: 'medium',
       });
     }
     return defaultConfigs;
   });
+  
   const startGame = useGameStore((state) => state.startGame);
+  const setSkin = useGameStore((state) => state.setSkin);
+  const setMapVariant = useGameStore((state) => state.setMapVariant);
+  const currentSkin = useGameStore((state) => state.skin);
+  const currentMapVariant = useGameStore((state) => state.mapVariant);
 
-  // Get available colors for AI (excluding player's chosen color)
   const availableAIColors = PLAYER_COLORS.filter(c => c !== playerColor);
 
   const handlePlayerCountChange = (count) => {
     setPlayerCount(count);
-    // Default: first player is human, rest are AI
     const newConfigs = [];
     for (let i = 0; i < count; i++) {
       newConfigs.push({
@@ -49,13 +72,10 @@ export default function StartScreen() {
   const toggleAI = (index) => {
     const newConfigs = [...playerConfigs];
     newConfigs[index] = { ...newConfigs[index], isAI: !newConfigs[index].isAI };
-
-    // Ensure at least one human player
     const humanCount = newConfigs.filter(c => !c.isAI).length;
     if (humanCount < 1 && !newConfigs[index].isAI) {
-      return; // Don't allow turning off the last human
+      return;
     }
-
     setPlayerConfigs(newConfigs);
   };
 
@@ -72,7 +92,6 @@ export default function StartScreen() {
       isAI: true,
       aiDifficulty: playerConfigs[index + 1].aiDifficulty,
     }));
-    // Add human player first
     config.unshift({
       color: playerColor,
       name: PLAYER_NAMES[0],
@@ -82,7 +101,16 @@ export default function StartScreen() {
     startGame(config, playerColor);
   };
 
-  // Stats helpers
+  const handleSkinSelect = (skinId) => {
+    setSkin(skinId);
+    setShowSkinModal(false);
+  };
+
+  const handleMapSelect = (mapVariantId) => {
+    setMapVariant(mapVariantId);
+    setShowMapModal(false);
+  };
+
   const stats = getStats();
   const totalWins = stats.wins.easy + stats.wins.medium + stats.wins.hard;
   const totalLosses = stats.losses.easy + stats.losses.medium + stats.losses.hard;
@@ -104,15 +132,36 @@ export default function StartScreen() {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-sky-400 to-blue-600">
       {/* Title */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h1 className="text-5xl font-bold text-white drop-shadow-lg mb-4">
           飞行棋大作战
         </h1>
         <p className="text-xl text-white/80">Flight Chess 3D</p>
       </div>
+
+      {/* Skin and Map Selection Row */}
+      <div className="flex gap-4 mb-4">
+        {/* Skin Selection */}
+        <button
+          onClick={() => setShowSkinModal(true)}
+          className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2 hover:bg-white/30 transition-all"
+        >
+          <span className="text-xl">{SKIN_THUMBNAILS[currentSkin]?.icon || '🎨'}</span>
+          <span className="text-white font-medium">皮肤: {SKIN_LIST.find(s => s.id === currentSkin)?.name || '经典'}</span>
+        </button>
+        
+        {/* Map Selection */}
+        <button
+          onClick={() => setShowMapModal(true)}
+          className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2 hover:bg-white/30 transition-all"
+        >
+          <span className="text-xl">{MAP_THUMBNAILS[currentMapVariant]?.icon || '✚'}</span>
+          <span className="text-white font-medium">地图: {MAP_VARIANT_LIST.find(m => m.id === currentMapVariant)?.name || '十字地图'}</span>
+        </button>
+      </div>
       
       {/* Mode Selection */}
-      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-6 w-96">
+      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-4 w-96">
         <h2 className="text-xl font-bold text-white mb-4 text-center">选择模式</h2>
         <div className="flex gap-4">
           <button
@@ -147,7 +196,7 @@ export default function StartScreen() {
       </div>
       
       {/* Player Color Selection */}
-      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-6 w-96">
+      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-4 w-96">
         <h2 className="text-xl font-bold text-white mb-4 text-center">选择颜色</h2>
         <div className="flex gap-4 justify-center">
           {PLAYER_COLORS.map((color) => (
@@ -169,7 +218,7 @@ export default function StartScreen() {
       </div>
       
       {/* Player Count */}
-      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-6 w-96">
+      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-4 w-96">
         <h2 className="text-xl font-bold text-white mb-4 text-center">玩家数量</h2>
         <div className="flex gap-4 justify-center">
           {[2, 3, 4].map((count) => (
@@ -188,7 +237,6 @@ export default function StartScreen() {
         </div>
         <div className="flex justify-center gap-2 mt-4">
           {Array.from({ length: playerCount }).map((_, i) => {
-            const colorIndex = i === 0 ? PLAYER_COLORS.indexOf(playerColor) : availableAIColors.indexOf(availableAIColors[i - 1]);
             const color = i === 0 ? playerColor : availableAIColors[i - 1];
             return (
               <div
@@ -204,7 +252,7 @@ export default function StartScreen() {
       </div>
       
       {/* Player Types */}
-      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-6 w-96">
+      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-4 w-96">
         <h2 className="text-xl font-bold text-white mb-4 text-center">玩家类型</h2>
         <div className="flex flex-col gap-3">
           {Array.from({ length: playerCount }).map((_, i) => {
@@ -243,7 +291,7 @@ export default function StartScreen() {
       </div>
 
       {/* AI Difficulty Selection */}
-      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-6 w-96">
+      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-4 w-96">
         <h2 className="text-xl font-bold text-white mb-4 text-center">AI难度</h2>
         <div className="flex flex-col gap-3">
           {Array.from({ length: playerCount }).map((_, i) => {
@@ -307,6 +355,82 @@ export default function StartScreen() {
           [详细]
         </button>
       </div>
+
+      {/* Skin Selection Modal */}
+      {showSkinModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-[500px] shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">选择皮肤</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {SKIN_LIST.map((skin) => (
+                <button
+                  key={skin.id}
+                  onClick={() => handleSkinSelect(skin.id)}
+                  className={`p-4 rounded-xl text-left transition-all ${
+                    currentSkin === skin.id
+                      ? 'ring-4 ring-blue-500 shadow-lg'
+                      : 'hover:scale-102 hover:shadow-md'
+                  }`}
+                  style={{ backgroundColor: SKIN_THUMBNAILS[skin.id]?.bg || '#ccc' }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{SKIN_THUMBNAILS[skin.id]?.icon || '🎨'}</span>
+                    <div>
+                      <div className="font-bold text-lg">{skin.name}</div>
+                      <div className="text-xs opacity-70">{skin.nameEn}</div>
+                      <div className="text-sm opacity-60 mt-1">{skin.description}</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowSkinModal(false)}
+              className="w-full mt-4 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Map Selection Modal */}
+      {showMapModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-[500px] shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">选择地图</h3>
+            <div className="flex flex-col gap-3">
+              {MAP_VARIANT_LIST.map((variant) => (
+                <button
+                  key={variant.id}
+                  onClick={() => handleMapSelect(variant.id)}
+                  className={`p-4 rounded-xl text-left transition-all ${
+                    currentMapVariant === variant.id
+                      ? 'ring-4 ring-blue-500 shadow-lg'
+                      : 'hover:scale-102 hover:shadow-md'
+                  }`}
+                  style={{ backgroundColor: MAP_THUMBNAILS[variant.id]?.bg || '#ccc' }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{MAP_THUMBNAILS[variant.id]?.icon || '✚'}</span>
+                    <div>
+                      <div className="font-bold text-lg">{variant.name}</div>
+                      <div className="text-xs opacity-70">{variant.nameEn}</div>
+                      <div className="text-sm opacity-60 mt-1">{variant.description}</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowMapModal(false)}
+              className="w-full mt-4 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats Modal */}
       {showStatsModal && (
